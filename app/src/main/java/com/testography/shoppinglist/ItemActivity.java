@@ -53,6 +53,7 @@ public class ItemActivity extends AppCompatActivity {
 
             mRealm.commitTransaction();
 
+            setResult(RESULT_OK);
             finish();
         }
 

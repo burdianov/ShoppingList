@@ -1,6 +1,7 @@
 package com.testography.shoppinglist;
 
 import android.content.Intent;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -13,14 +14,23 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
+import io.realm.RealmResults;
+import io.realm.Sort;
 
 public class MainActivity extends AppCompatActivity {
+
+    private static final int REQUEST_CODE = 1;
 
     private RecyclerView mShoppingItems;
 
     private Realm mRealm;
+
+    private List<ShoppingItem> mDataSet;
 
     private RecyclerView.Adapter mShoppingItemsAdapter = new RecyclerView.Adapter() {
 
@@ -59,12 +69,42 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            ShoppingItem currentItem = mDataSet.get(position);
 
+            if (currentItem.getTimestamp() == -1) {
+                return;
+            }
+
+            if (currentItem.isCompleted()) {
+                InactiveItemViewHolder h = (InactiveItemViewHolder) holder;
+                h.mItemName.setText(currentItem.getName());
+                h.mItemName.setPaintFlags(h.mItemName.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            } else {
+                ActiveItemViewHolder h = (ActiveItemViewHolder) holder;
+                h.mItemName.setText(currentItem.getName());
+                h.mItemQuantity.setText(currentItem.getQuantity());
+                h.mItemStatus.setChecked(false);
+            }
         }
 
         @Override
         public int getItemCount() {
-            return 0;
+            return mDataSet.size();
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            ShoppingItem currentItem = mDataSet.get(position);
+
+            if (currentItem.getTimestamp() == -1) {
+                return SUBHEADER_VIEW;
+            }
+
+            if (currentItem.isCompleted()) {
+                return INACTIVE_VIEW;
+            }
+
+            return ACTIVE_VIEW;
         }
     };
 
@@ -86,12 +126,46 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent i = new Intent(MainActivity.this, ItemActivity.class);
                 i.putExtra("TITLE", "Add item");
-                startActivity(i);
+                startActivityForResult(i, REQUEST_CODE);
             }
         });
 
         mShoppingItems = (RecyclerView) findViewById(R.id.shopping_items);
         mShoppingItems.setLayoutManager(new LinearLayoutManager(this));
+
+        initializeDataSet();
+
+        mShoppingItems.setAdapter(mShoppingItemsAdapter);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
+            initializeDataSet();
+            mShoppingItemsAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private void initializeDataSet() {
+        mDataSet = new ArrayList<>();
+
+        RealmResults<ShoppingItem> activeItemResults
+                = mRealm.where(ShoppingItem.class).equalTo("completed", false)
+                .findAllSorted("timestamp", Sort.DESCENDING);
+
+        RealmResults<ShoppingItem> inactiveItemResults
+                = mRealm.where(ShoppingItem.class).equalTo("completed", true)
+                .findAllSorted("timestamp", Sort.DESCENDING);
+
+        ShoppingItem subheader = new ShoppingItem();
+        subheader.setTimestamp(-1);
+
+        for (ShoppingItem item : activeItemResults) {
+            mDataSet.add(item);
+        }
+        mDataSet.add(subheader);
+        for (ShoppingItem item : inactiveItemResults) {
+            mDataSet.add(item);
+        }
+    }
 }
