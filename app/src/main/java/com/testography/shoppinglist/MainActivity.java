@@ -13,9 +13,14 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView mShoppingItems;
+
+    private Realm mRealm;
 
     private RecyclerView.Adapter mShoppingItemsAdapter = new RecyclerView.Adapter() {
 
@@ -69,6 +74,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        RealmConfiguration configuration =
+                new RealmConfiguration.Builder(this).build();
+        Realm.setDefaultConfiguration(configuration);
+        mRealm = Realm.getDefaultInstance();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
