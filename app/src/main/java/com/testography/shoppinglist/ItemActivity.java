@@ -11,6 +11,10 @@ public class ItemActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_item);
+
+        if (getIntent().hasExtra("TITLE")) {
+            setTitle(getIntent().getStringExtra("TITLE"));
+        }
     }
 
     @Override
