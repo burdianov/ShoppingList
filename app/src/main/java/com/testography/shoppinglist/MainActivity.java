@@ -9,15 +9,47 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView mShoppingItems;
 
     private RecyclerView.Adapter mShoppingItemsAdapter = new RecyclerView.Adapter() {
+
+        private final int ACTIVE_VIEW = 1;
+        private final int INACTIVE_VIEW = 2;
+        private final int SUBHEADER_VIEW = 3;
+
         @Override
         public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return null;
+            switch (viewType) {
+                case ACTIVE_VIEW:
+                    View v = getLayoutInflater().inflate(R.layout.active_item,
+                            parent, false);
+                    return new ActiveItemViewHolder(v,
+                            (CheckBox) v.findViewById(R.id.item_status),
+                            (TextView) v.findViewById(R.id.item_name),
+                            (TextView) v.findViewById(R.id.item_quantity),
+                            (ImageView) v.findViewById(R.id.item_action)
+                    );
+                case INACTIVE_VIEW:
+                    v = getLayoutInflater().inflate(R.layout
+                            .inactive_item, parent, false);
+                    return new InactiveItemViewHolder(v,
+                            (CheckBox) v.findViewById(R.id.item_status),
+                            (TextView) v.findViewById(R.id.item_name),
+                            (TextView) v.findViewById(R.id.item_quantity),
+                            (ImageView) v.findViewById(R.id.item_action)
+                    );
+                case SUBHEADER_VIEW:
+                    v = getLayoutInflater().inflate(R.layout.subheader, parent, false);
+                    return new SubheaderViewHolder(v);
+                default:
+                    return null;
+            }
         }
 
         @Override
