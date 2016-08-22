@@ -11,6 +11,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-            ShoppingItem currentItem = mDataSet.get(position);
+            final ShoppingItem currentItem = mDataSet.get(position);
 
             if (currentItem.getTimestamp() == -1) {
                 return;
@@ -79,11 +80,51 @@ public class MainActivity extends AppCompatActivity {
                 InactiveItemViewHolder h = (InactiveItemViewHolder) holder;
                 h.mItemName.setText(currentItem.getName());
                 h.mItemName.setPaintFlags(h.mItemName.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+
+                h.mItemAction.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        mRealm.beginTransaction();
+                        currentItem.setCompleted(false);
+                        currentItem.setTimestamp(System.currentTimeMillis());
+                        mRealm.commitTransaction();
+
+                        initializeDataSet();
+                        mShoppingItemsAdapter.notifyDataSetChanged();
+                    }
+                });
             } else {
                 ActiveItemViewHolder h = (ActiveItemViewHolder) holder;
                 h.mItemName.setText(currentItem.getName());
                 h.mItemQuantity.setText(currentItem.getQuantity());
                 h.mItemStatus.setChecked(false);
+
+                h.mItemStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton compoundButton,
+                                                 boolean checked) {
+                        if (checked) {
+                            mRealm.beginTransaction();
+                            currentItem.setCompleted(true);
+                            currentItem.setTimestamp(System.currentTimeMillis());
+                            mRealm.commitTransaction();
+
+                            initializeDataSet();
+                            mShoppingItemsAdapter.notifyDataSetChanged();
+                        }
+                    }
+                });
+                h.mItemAction.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent i = new Intent(MainActivity.this, ItemActivity.class);
+                        i.putExtra("TITLE", "Edit item");
+                        i.putExtra("ITEM_NAME", currentItem.getName());
+                        i.putExtra("ITEM_QUANTITY", currentItem.getQuantity());
+                        i.putExtra("ITEM_ID", currentItem.getId());
+                        startActivityForResult(i, REQUEST_CODE);
+                    }
+                });
             }
         }
 

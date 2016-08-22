@@ -16,6 +16,8 @@ public class ItemActivity extends AppCompatActivity {
     private EditText mInputItemQuantity;
     private Realm mRealm;
 
+    private boolean mEditMode = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,6 +31,12 @@ public class ItemActivity extends AppCompatActivity {
         mInputItemQuantity = (EditText) findViewById(R.id.input_item_quantity);
 
         mRealm = Realm.getDefaultInstance();
+
+        if (getIntent().hasExtra("ITEM_NAME")) {
+            mInputItemName.setText(getIntent().getStringExtra("ITEM_NAME"));
+            mInputItemQuantity.setText(getIntent().getStringExtra("ITEM_QUANTITY"));
+            mEditMode = true;
+        }
     }
 
     @Override
@@ -39,7 +47,7 @@ public class ItemActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.save_action) {
+        if (item.getItemId() == R.id.save_action && !mEditMode) {
 
             mRealm.beginTransaction();
 
@@ -49,6 +57,24 @@ public class ItemActivity extends AppCompatActivity {
             shoppingItem.setQuantity(mInputItemQuantity.getText().toString());
             shoppingItem.setCompleted(false);
             shoppingItem.setId(UUID.randomUUID().toString());
+            shoppingItem.setTimestamp(System.currentTimeMillis());
+
+            mRealm.commitTransaction();
+
+            setResult(RESULT_OK);
+            finish();
+        }
+
+        if (item.getItemId() == R.id.save_action && mEditMode) {
+
+            mRealm.beginTransaction();
+
+            ShoppingItem shoppingItem
+                    = mRealm.where(ShoppingItem.class).equalTo("id", getIntent()
+                    .getStringExtra("ITEM_ID")).findFirst();
+
+            shoppingItem.setName(mInputItemName.getText().toString());
+            shoppingItem.setQuantity(mInputItemQuantity.getText().toString());
             shoppingItem.setTimestamp(System.currentTimeMillis());
 
             mRealm.commitTransaction();
